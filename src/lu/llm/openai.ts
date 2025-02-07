@@ -46,7 +46,7 @@ export const getAIResponse = async ({ messages, model = "gpt-4o-mini", temperatu
 	const itokens = Number(usage.prompt_tokens);
 	const otokens = Number(usage.completion_tokens);
 
-	const priceModel = PRICE[model] || PRICE.default;
+	const priceModel = PRICE[model as keyof typeof PRICE] || PRICE.default;
 	const price = itokens * priceModel.INPUT + otokens * priceModel.OUTPUT;
 
 	console.log(`INPUT: $${itokens * priceModel.INPUT} (${itokens} it) - OUTPUT: $${otokens * priceModel.OUTPUT} (${otokens} it) - Total: $${price} (${itokens + otokens} it)`);

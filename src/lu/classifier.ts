@@ -21,7 +21,7 @@ TIPO DE RESPUESTA:
 }\`\`\`
 
 REGLAS:
-- NO USAR (GRUPOS) para clasificar.
+- En el JSON para clasificar aparecen (GRUPOS), ignorar e ir al subnivel.
 - UTILIZAR la subcategoría específica para el topic.
 - El topic debe tener coherencia con 'revised_prompt'
 - El tipo de respuesta debe tener forma JSON, NUNCA texto plano.
