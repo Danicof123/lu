@@ -1,7 +1,7 @@
 {
-  "name": "lu",
+  "name": "ludmi",
   "version": "1.0.0",
-  "description": "Layer Understanding",
+  "description": "(LU)dmi - Layer Understanding",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

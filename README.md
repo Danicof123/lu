@@ -27,7 +27,7 @@ In today’s AI revolution, chatbots can easily stray off-topic if left complete
 Install LU via NPM:
 
 ```bash
-npm i lu
+npm i ludmi
 ```
 
 ## Usage
