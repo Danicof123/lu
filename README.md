@@ -1,7 +1,3 @@
-Below is an updated README.md that incorporates the project’s primary objective and includes an example custom action for the “Create Account” topic, illustrating how the action returns an “eval” object that can drive specific chatbot flows.
-
----
-
 # LU (Layer Understanding)
 
 LU is a lightweight, modular library designed to harness the power of Large Language Models (LLMs) while keeping chatbot conversations controlled. Built for chatbot developers, LU leverages the understanding capabilities of LLMs to generate natural, human-like interactions while ensuring the conversation stays on track.
