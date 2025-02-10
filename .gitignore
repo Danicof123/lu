@@ -1,5 +1,6 @@
 # Compiled source #
 dist/
+test/
 
 # Dependency directories
 node_modules/
