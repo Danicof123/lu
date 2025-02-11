@@ -6,7 +6,7 @@ interface AIResponseProps {
 	temperature: number;
 }
 
-interface AIResponseReturn {
+export interface AIResponseReturn {
 	content: string;
 	price: number;
 }
