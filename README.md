@@ -23,9 +23,12 @@ In today’s AI revolution, chatbots often wander off-topic if left completely f
 - **Retriever & RAG Functionality:**  
   - **Retriever:** Compute text embeddings and use cosine similarity to retrieve the most relevant chunks from your knowledge base.  
   - **RAG (Retrieval-Augmented Generation):** Combine user data, retrieved chunks, and conversation context to generate enriched responses with controlled styling (e.g., WhatsApp-like formatting with emojis and emphasized keywords).
+<<<<<<< HEAD
 - **Knowledge Base Generation:**  
   - **knowledgeBaseByText:** Splits a long text into manageable fragments with overlapping tokens and computes embeddings for each fragment.  
   - **knowledgeBaseByJSON:** Processes a JSON structure with knowledge elements, concatenates text content, and generates a structured knowledge base with fragments enriched with embeddings.
+=======
+>>>>>>> main
 
 ## Installation
 
