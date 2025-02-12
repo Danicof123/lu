@@ -1,7 +1,7 @@
 {
   "name": "ludmi",
   "version": "1.1.0",
-  "description": "(LU)dmi - Layer Understanding",
+  "description": "LU (Layer Understanding) is a lightweight framework for controlled chatbot interactions with LLMs, action orchestration, and retrieval-augmented generation (RAG).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
