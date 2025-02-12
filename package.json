@@ -1,7 +1,7 @@
 {
   "name": "ludmi",
-  "version": "1.0.3",
-  "description": "(LU)dmi - Layer Understanding",
+  "version": "1.1.0",
+  "description": "LU (Layer Understanding) is a lightweight framework for controlled chatbot interactions with LLMs, action orchestration, and retrieval-augmented generation (RAG).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,6 +11,29 @@
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "chatbot",
+    "LLM",
+    "AI",
+    "LU",
+    "Layer-Understanding",
+    "orchestrator",
+    "conversation-control",
+    "retrieval-augmented-generation",
+    "RAG",
+    "natural-language-processing",
+    "NLP",
+    "AI-framework",
+    "embeddings",
+    "retriever",
+    "openai",
+    "chatbot-framework",
+    "knowledge-base",
+    "contextual-ai",
+    "text-embeddings",
+    "ai-assistant",
+    "lightweight"
+  ],
   "author": "Daniel Fernández",
   "license": "MIT",
   "devDependencies": {
@@ -19,6 +42,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
-    "openai": "^4.83.0"
+    "openai": "^4.83.0",
+    "tiktoken": "^1.0.20"
   }
 }
