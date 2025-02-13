@@ -18,8 +18,6 @@ export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", te
 //get revised prompt
 const revisedPrompt = await getRevisedPrompt({ conversation, model, temperature });
 
-console.log(1, revisedPrompt.content);
-
 const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics:
 ${JSON.stringify(topics)}
 
@@ -34,8 +32,7 @@ NOTA:
 	];
 
 	const topic = await getAIResponse({ messages, model, temperature });
-	console.log(2, topic.content);
-	
+
 	return {
 		price: topic.price + revisedPrompt.price,
 		revised_prompt: revisedPrompt.content,
