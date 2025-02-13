@@ -1,5 +1,4 @@
 import { getAIResponse } from "./llm/openai";
-import { JSONparse } from "./parse";
 
 interface getTopicProps {
 	topics: Topics;
@@ -7,43 +6,45 @@ interface getTopicProps {
 	temperature?: number;
 	model?: Model;
 }
-export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", temperature = .5 }: getTopicProps) => {
-	console.log(3);
-	
-	//Create the developer instruction
-	const developerInstruction = `Eres un CLASIFICADOR JSON. Tu única tarea es analizar la conversación y extraer la intención del usuario, respondiendo estrictamente con un objeto JSON que siga este formato EXACTO:
-{
-  "revised_prompt": "<mensaje reestructurado de la conversación>" //Centrarse en un solo tópico
-  "topic": "<categoría identificada>"
+
+interface getRevisedPromptProps {
+	conversation: Messages;
+	temperature?: number;
+	model?: Model;
 }
 
-Topics para clasificar:
+export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", temperature = .5 }: getTopicProps) => {
+
+//get revised prompt
+const revisedPrompt = await getRevisedPrompt({ conversation, model, temperature });
+
+console.log(1, revisedPrompt.content);
+
+const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics:
 ${JSON.stringify(topics)}
 
 NOTA:
 - Los tópicos están organizados en grupos.
 - Ignora los (GRUPOS) y enfócate en los tópicos.
+- No agregues nada extra, solo respondes con el nombre del topic.`;
 
-Instrucciones estrictas:
-- El campo "topic" debe derivarse exclusivamente del contenido de "revised_prompt". Si existe discrepancia entre el contenido textual y el topic asignado, **prioriza lo que indica "revised_prompt"**.
-- Debes responder ÚNICAMENTE con el objeto JSON exacto, sin ningún texto adicional, explicaciones, comentarios o markdown.
-- Si el input es una pregunta o contiene información mixta, ignora el formato textual y extrae la intención real según toda la conversación.
-- Revisa toda la conversación: si la última entrada no aporta suficiente información, utiliza mensajes anteriores para completar el contexto.
-- Ignora cualquier dato o texto que no pertenezca al formato JSON requerido.
-- **IMPORTANTE:** Si generas una respuesta que no sea exclusivamente el JSON solicitado, se considerará incorrecto.
+	const messages: Messages = [
+		{ role: "developer", content: developerInstruction },
+		{ role: "user", content: revisedPrompt.content },
+	];
 
-Instrucciones para topic:
-- No puede ser un (GRUPO).
-- Debe ser un topic de "Topics para clasificar".
-- Debe ser el topic que mejor se ajuste a la revised_prompt.
+	const topic = await getAIResponse({ messages, model, temperature });
+	console.log(2, topic.content);
+	
+	return {
+		price: topic.price + revisedPrompt.price,
+		revised_prompt: revisedPrompt.content,
+		topic: topic.content
+	}
+}
 
-Cadena de pensamiento:
-- Analizo la entrada del usuario.
-- No me interesa responderle, no es mi trabajo.
-- Busco el topic de "Topics para clasificar" que mejor se ajuste a la revised_prompt, ignoro los (GRUPOS).
-- Genero una respuesta en formato JSON.
-- Me aseguro que topic y revised_prompt sean coherentes.
-`;
+const getRevisedPrompt = async ({ conversation, model = "gpt-4o-mini", temperature=1, }: getRevisedPromptProps) => {
+	const developerInstruction = `Reestructura la conversación con la intención del usuario con respecto al último mensaje y escribelo como si lo hubiese dicho el mismo usuario.`;
 
 	// Create the message to be sent
 	const messages: Messages = [
@@ -51,11 +52,5 @@ Cadena de pensamiento:
 		{ role: "developer", content: developerInstruction },
 	];
 
-	const { price, content } = await getAIResponse({ messages, model, temperature });
-	const json = JSONparse(content) as ClassifiedTopic;
-
-	return {
-		price,
-		...json
-	}
-}
+	return await getAIResponse({ messages, model, temperature });
+};
