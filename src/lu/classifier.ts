@@ -41,7 +41,7 @@ NOTA:
 }
 
 const getRevisedPrompt = async ({ conversation, model = "gpt-4o-mini", temperature=1, }: getRevisedPromptProps) => {
-	const developerInstruction = `Reestructura la conversación con la intención del usuario con respecto al último mensaje y escribelo como si lo hubiese dicho el mismo usuario.`;
+	const developerInstruction = `ERES UN REFORMULADOR. A que se refiere el usuario con la última entrada? Reformula la entrada del usuario para que sea más clara y responde como si fuese el mismo usuario, es decir en primera persona. No agregues nada extra, solo responde con la reformulación.`;
 
 	// Create the message to be sent
 	const messages: Messages = [
