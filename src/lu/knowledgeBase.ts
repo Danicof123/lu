@@ -41,17 +41,13 @@ export const knowledgeBaseByJSON = async ({ json, maxTokens = 1000, overlapToken
 	const data: KnowledgeBaseReturn = {};
 	for (const key in json) {
 		for (const element of json[key]) {
-			const text = element.content.join("\n");
+			const text = JSON.stringify(element);
 			const fragments = await knowledgeBaseByText({ text, maxTokens, overlapTokens });
-			const { content, ...otherProps } = element;
 
 			//add fragments to the data
 			data[key] = data[key] || [];
 			fragments.forEach(fragment => {
-				data[key].push({
-					...otherProps,
-					...fragment
-				})
+				data[key].push(fragment)
 			});
 		}
 	}
@@ -64,7 +60,7 @@ export const knowledgeBaseByText = async ({ text, maxTokens = 1000, overlapToken
 		throw new Error('maxTokens debe ser mayor que overlapTokens');
 	}
 	const fragments: Fragment[] = [];
-	const encoder = encoding_for_model("gpt-4o-mini");
+	const encoder = encoding_for_model(MODEL);
 	const tokens = encoder.encode(text);
 
 	const step = maxTokens - overlapTokens;
