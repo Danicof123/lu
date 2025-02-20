@@ -2,16 +2,14 @@ import { encoding_for_model } from "tiktoken";
 import { getEmbeddings } from "./llm/openai";
 
 type JSONElement = {
-	content: string[];
 	[key: string]: any;
 }
 
-type JSONData = {
-	[key: string]: JSONElement[];
-}
+type JSONData = JSONElement[];
 
 interface KnowledgeBaseByJSONProps {
 	json: JSONData;
+	id?: string;
 	maxTokens?: number;
 	overlapTokens?: number;
 }
@@ -24,6 +22,7 @@ interface KnowledgeBaseByTextProps {
 
 type Fragment = {
 	fragmentIndex: number;
+	id?: string;
 	text: string;
 	embedding: number[];
 }
@@ -33,23 +32,24 @@ export interface KnowledgeBaseReturn {
 }
 const MODEL = "text-embedding-3-small";
 
-export const knowledgeBaseByJSON = async ({ json, maxTokens = 1000, overlapTokens = 100 }: KnowledgeBaseByJSONProps) => {
+export const knowledgeBaseByJSON = async ({ json, maxTokens = 1000, overlapTokens = 100, id }: KnowledgeBaseByJSONProps) => {
 	if (maxTokens <= overlapTokens) {
 		throw new Error('maxTokens debe ser mayor que overlapTokens');
 	}
 
-	const data: KnowledgeBaseReturn = {};
-	for (const key in json) {
-		for (const element of json[key]) {
-			const text = JSON.stringify(element);
-			const fragments = await knowledgeBaseByText({ text, maxTokens, overlapTokens });
+	const data: Fragment[] = [];
+	for (const element of json) {
 
-			//add fragments to the data
-			data[key] = data[key] || [];
-			fragments.forEach(fragment => {
-				data[key].push(fragment)
-			});
-		}
+		const text = JSON.stringify(element);
+		const fragments = await knowledgeBaseByText({ text, maxTokens, overlapTokens });
+		
+		//add fragments to the data
+		fragments.forEach(fragment => {
+			data.push({
+				id: id && element[id],
+				...fragment
+			})
+		});
 	}
 
 	return data;
