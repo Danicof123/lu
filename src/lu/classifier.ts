@@ -18,7 +18,7 @@ export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", te
 //get revised prompt
 const revisedPrompt = await getRevisedPrompt({ conversation, model, temperature });
 
-const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics:
+const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics, prestar atención en description:
 ${JSON.stringify(topics)}
 
 NOTA:
@@ -27,8 +27,8 @@ NOTA:
 - No agregues nada extra, solo respondes con el nombre del topic.`;
 
 	const messages: Messages = [
-		{ role: "developer", content: developerInstruction },
 		{ role: "user", content: revisedPrompt.content },
+		{ role: "developer", content: developerInstruction },
 	];
 
 	const topic = await getAIResponse({ messages, model, temperature });
