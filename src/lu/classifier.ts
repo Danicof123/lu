@@ -18,13 +18,13 @@ export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", te
 //get revised prompt
 const revisedPrompt = await getRevisedPrompt({ conversation, model, temperature });
 
-const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics, prestar atención en description:
-${JSON.stringify(topics)}
+const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics:
+\`${JSON.stringify(topics)}\`
 
-NOTA:
-- Los tópicos están organizados en grupos.
-- Ignora los (GRUPOS) y enfócate en los tópicos.
-- No agregues nada extra, solo respondes con el nombre del topic.`;
+Pasos:
+- Analizar con atención a todos los topics'.
+- Seleccionar el topic que mejor se ajuste a la entrada del usuario.
+- Importante responder solo con el nombre del topic seleccionado sin agregar nada extra.`;
 
 	const messages: Messages = [
 		{ role: "user", content: revisedPrompt.content },
