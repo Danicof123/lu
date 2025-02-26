@@ -39,9 +39,8 @@ export const retriever = async ({ revised_prompt, data, size = 4 }: retrieverPro
 }
 
 export const rag = async ({ chunks, conversation, userData, model }: ragProps) => {
-	const developerInstruction = `INFORMACIÓN A TENER EN CUENTA ANTES DE RESPONDER:
-- Información del usuario: ${JSON.stringify(userData)}
-- Base de conocimiento que se debe usar para responder: ${JSON.stringify(chunks)}
+	const developerInstruction = `Responder solo usando la información extraída de la BD:
+\`${JSON.stringify(chunks)}\`
 
 REGLAS DE RESPUESTA:
 - Mismo idioma del usuario.
@@ -52,6 +51,10 @@ REGLAS DE RESPUESTA:
 		{
 			role: "developer",
 			content: developerInstruction
+		},
+		{
+			role: "system",
+			content: `Datos que conocemos del usuario: \`${JSON.stringify(userData)}\``
 		},
 		...conversation
 	]
