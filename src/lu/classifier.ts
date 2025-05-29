@@ -4,22 +4,28 @@ import { JSONparse } from "./parse";
 interface getTopicProps {
 	topics: Topics;
 	conversation: Messages;
+	revised?: string;
+	prompts?: {
+		revised?: string;
+		topic?: string;
+	},
 	temperature?: number;
 	model?: Model;
 }
 
 interface getRevisedPromptProps {
 	conversation: Messages;
+	prompt?: string;
 	temperature?: number;
 	model?: Model;
 }
 
-export const getTopic = async ({ topics, conversation, model = "gpt-4o-mini", temperature = .5 }: getTopicProps) => {
+export const getTopic = async ({ topics, conversation, revised, prompts, model = "gpt-4o-mini", temperature = .5 }: getTopicProps) => {
 
 	//get revised prompt
-	const revisedPrompt = await getRevisedPrompt({ conversation, model, temperature });
+	const revisedPrompt = (revised) ? { content: revised, price: 0 } : await getRevisedPrompt({ prompt: prompts?.revised, conversation, model, temperature });
 
-	const developerInstruction = `Clasifica la entrada del usuario con las siguientes categorías de topics:
+	const developerInstruction = prompts?.topic || `Clasifica la entrada del usuario con las siguientes categorías de topics:
 \`${JSON.stringify(topics)}\`
 
 Pasos:
@@ -55,8 +61,9 @@ Formato respuesta:
 	}
 }
 
-const getRevisedPrompt = async ({ conversation, model = "gpt-4o-mini", temperature = 1, }: getRevisedPromptProps) => {
-	const developerInstruction = `ERES UN REFORMULADOR. A que se refiere el usuario con la última entrada? Reformula la entrada del usuario para que sea más clara y responde como si fuese el mismo usuario, es decir en primera persona. No agregues nada extra, solo responde con la reformulación.`;
+const getRevisedPrompt = async ({ prompt, conversation, model = "gpt-4o-mini", temperature = 1, }: getRevisedPromptProps) => {
+	const developerInstruction = prompt || `ERES UN REFORMULADOR. A que se refiere el usuario con la última entrada? Reformula la entrada del usuario para que sea más clara y responde como si fuese el mismo usuario, es decir en primera persona. Debes prestar atención cuando el usuario quiere cerrar la conversación.
+No agregues nada extra, solo responde con la reformulación.`;
 
 	// Create the message to be sent
 	const messages: Messages = [

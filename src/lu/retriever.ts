@@ -14,6 +14,7 @@ interface ragProps {
 	conversation: Messages;
 	chunks: Chunks;
 	model: Model;
+	prompt?: string;
 }
 
 //get the cosine similarity between two vectors
@@ -38,13 +39,13 @@ export const retriever = async ({ revised_prompt, data, size = 4 }: retrieverPro
 	return chunks.slice(0, size);
 }
 
-export const rag = async ({ chunks, conversation, userData, model }: ragProps) => {
-	const developerInstruction = `Responder solo usando la información extraída de la BD:
+export const rag = async ({ chunks, conversation, userData, model, prompt }: ragProps) => {
+	const developerInstruction = prompt || `Responder solo usando la información extraída de la BD:
 \`${JSON.stringify(chunks)}\`
 
 REGLAS DE RESPUESTA:
 - Mismo idioma del usuario.
-- Estilo whatsapp, ejemplo para destacar palabra clave: *palabra*.
+- Estilo whatsapp, ejemplo para destacar palabra clave: *palabra* (No usar doble asteriscos; **MAL**).
 - Emojis con coherencia.`;
 
 	const messages: Messages = [
