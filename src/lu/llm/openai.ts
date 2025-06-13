@@ -1,14 +1,34 @@
 import { openai } from "../../services/openai";
 
+interface ToolFunction {
+  type: "function";
+  function: {
+    name: string;
+    description?: string;
+    parameters: {
+      type: "object";
+      properties: {
+        [key: string]: {
+          type: string;
+          description?: string;
+        };
+      };
+      required?: string[];
+    };
+  };
+}
+
 interface AIResponseProps {
 	messages: Messages;
 	model: Model;
 	temperature: number;
+	tools?: ToolFunction[];
 }
 
 export interface AIResponseReturn {
 	content: string;
 	price: number;
+	calls?: any;
 }
 
 const PRICE = {
@@ -33,13 +53,16 @@ const PRICE = {
  * @param {Messages} props.messages - The messages to be sent to the AI.
  * @param {Model} props.model - The model to be used by the AI.
  * @param {number} props.temperature - The temperature to be used by the AI.
+ * @param {string[]} props.tools - The tools to be used by the AI (optional).
  * @returns {} { price, content }
  */
-export const getAIResponse = async ({ messages, model = "gpt-4o-mini", temperature = 1 }: AIResponseProps): Promise<AIResponseReturn> => {
+export const getAIResponse = async ({ messages, model = "gpt-4o-mini", temperature = 1, tools = [] }: AIResponseProps): Promise<AIResponseReturn> => {
 	const completions = await openai.chat.completions.create({
 		model,
 		messages,
-		temperature
+		temperature,
+		tools,
+		tool_choice: "auto",
 	});
 
 	const usage = completions.usage!;
@@ -51,9 +74,13 @@ export const getAIResponse = async ({ messages, model = "gpt-4o-mini", temperatu
 
 	console.log(`INPUT: $${itokens * priceModel.INPUT} (${itokens} it) - OUTPUT: $${otokens * priceModel.OUTPUT} (${otokens} it) - Total: $${price} (${itokens + otokens} it)`);
 
+
+	console.log(0, completions.choices[0].message.tool_calls || "No tool calls made");
+
 	return {
 		content: completions.choices[0].message.content || "",
-		price
+		price,
+		calls: completions.choices[0].message.tool_calls || []
 	};
 };
 

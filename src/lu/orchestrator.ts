@@ -2,6 +2,7 @@ import { getTopic } from "./classifier";
 import { addMessageToHistory, getContextHistory } from "./memory/queueMemory";
 
 interface OrchestratorProps {
+	metadata?: any,
 	topics: Topics;
 	input: Content;
 	revised?: string;
@@ -29,6 +30,8 @@ export const orchestrator = async ({ history = [], input, revised, sizeHistory =
 		userData
 	}
 
+	console.log(100000000);
+	
 	//Exist the actions for the topic
 	const action = actions[topic];
 	if (action) {
