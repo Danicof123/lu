@@ -1,6 +1,4 @@
 type Eval = {
-	type: string;
-	message?: string;
 	[key: string]: any;
 }
 
@@ -18,5 +16,5 @@ interface ActionReturn {
 
 type Action = ({input, revised_prompt, userData = {}, history = []}: ActionProps) => Promise<ActionReturn>;
 type Actions = {
-	[key: string]: Action | undefined;
+	[key: string]: Action;
 }

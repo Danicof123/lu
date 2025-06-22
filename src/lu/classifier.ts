@@ -1,8 +1,10 @@
+import { Messages, Model } from "../types/luOpenai";
 import { getAIResponse } from "./llm/openai";
 import { JSONparse } from "./parse";
 
 interface getTopicProps {
-	topics: Topics;
+	metadata?: any,
+	topics: any;
 	conversation: Messages;
 	revised?: string;
 	prompts?: {
@@ -21,12 +23,40 @@ interface getRevisedPromptProps {
 	model?: Model;
 }
 
-export const getTopic = async ({ topics, conversation, revised, prompts, model = "gpt-4o-mini", temperature = .5 }: getTopicProps) => {
+export interface classifierProps {
+	topics: any;
+	input: string;
+	prompt?: string;
+	model?: string;
+	temperature?: number;
+}
+
+export const getTopic = async ({ topics, conversation, revised, prompts, model = "gpt-4o-mini", temperature = .5, metadata = {} }: getTopicProps) => {
 
 	//get revised prompt
-	const revisedPrompt = (revised) ? { content: revised, price: 0 } : await getRevisedPrompt({ prompt: prompts?.revised, conversation, model, temperature });
+	const revisedPrompt = (revised) ? { content: revised, price: 0 } : await getRevisedPrompt({ prompt: prompts?.revised, conversation, model, temperature, metadata });
 
-	const developerInstruction = prompts?.topic || `Clasifica la entrada del usuario con las siguientes categorías de topics:
+	const respTopic = await classifier({
+		topics,
+		input: revisedPrompt.content,
+		prompt: prompts?.topic,
+		model,
+		temperature
+	}); 
+
+	return {
+		price: respTopic.price + revisedPrompt.price,
+		revised_prompt: revisedPrompt.content,
+		topic: respTopic.topic
+	}
+}
+
+
+//Solo clasifica el topic de la entrada del usuario
+export const classifier = async ({ topics, input, prompt, model = "gpt-4o-mini", temperature = .5 }: classifierProps) => {
+	console.log("En el classifier con input:", input, "y topics:", topics);
+	
+	const developerInstruction = prompt || `Clasifica la entrada del usuario con las siguientes categorías de topics:
 \`${JSON.stringify(topics)}\`
 
 Pasos:
@@ -39,25 +69,28 @@ Formato respuesta:
 	"topic": "nombre del topic"
 }`;
 
-
 	const messages: Messages = [
-		{ role: "user", content: revisedPrompt.content },
+		{ role: "user", content: input },
 		{ role: "developer", content: developerInstruction },
 	];
 
 	const respTopic = await getAIResponse({ messages, model, temperature });
+
+	console.log("Respuesta del classifier:", respTopic);
+	
 	let topic = "ne";
 	try {
-		const parse = JSONparse(respTopic.content) as { topic: string, name: string };
-		topic = parse?.topic || parse?.name;
+		const parse = JSONparse(respTopic.content) as { topic?: string, name?: string };
+		topic = parse?.topic || parse?.name || "ne";
+		console.log("Topic clasificado:", topic);
+		
 	} catch (error) {
 		console.error(error);
 		topic = respTopic.content;
 	}
 
 	return {
-		price: respTopic.price + revisedPrompt.price,
-		revised_prompt: revisedPrompt.content,
+		price: respTopic.price,
 		topic
 	}
 }
@@ -75,8 +108,7 @@ Si el mensaje no es un cierre o saludo, interpreta a qué se refiere usando el c
 IMPORTANTE:
 - No agregues nada extra ni expliques lo que haces.
 - Solo responde con la reformulación del usuario, como si él mismo lo dijera.
-
-Información adicional que podrías considerar: ${JSON.stringify(metadata)}`;
+- En caso de ser necesario nutrir la entrada del usuario con estos metadatos: ${JSON.stringify(metadata)}`;
 
 	// Create the message to be sent
 	const messages: Messages = [

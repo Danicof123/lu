@@ -1,4 +1,5 @@
 import { openai } from "../../services/openai";
+import { Messages, Model } from "../../types/luOpenai";
 
 interface ToolFunction {
   type: "function";

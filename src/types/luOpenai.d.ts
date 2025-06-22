@@ -1,10 +1,10 @@
 type Content = string;
 type Role = "assistant" | "system" | "developer" | "user"
-type Message = {
+export type Message = {
     role: Role;
     content: Content;
 }
-type Messages = Message[];
+export type Messages = Message[];
 
 type Model = "gpt-4o-mini" | "text-embedding-3-small" | (string & {});
 type Chunk = {

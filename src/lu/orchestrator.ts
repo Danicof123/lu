@@ -1,9 +1,11 @@
+import { Content, Messages } from "../types/luOpenai";
+import { DataOrq, ResultOrq } from "../types/luTypes";
 import { getTopic } from "./classifier";
 import { addMessageToHistory, getContextHistory } from "./memory/queueMemory";
 
 interface OrchestratorProps {
 	metadata?: any,
-	topics: Topics;
+	topics: any;
 	input: Content;
 	revised?: string;
 	history: Messages;
@@ -12,17 +14,17 @@ interface OrchestratorProps {
 	userData: UserData;
 }
 
-export const orchestrator = async ({ history = [], input, revised, sizeHistory = 10, topics, userData = {}, actions = {} }: OrchestratorProps): Promise<OrchestratorReturn> => {
+export const orchestrator = async ({ history = [], input, revised, sizeHistory = 10, topics, userData = {}, actions = {}, metadata }: OrchestratorProps): Promise<ResultOrq> => {
 	//Update the history with the new input
 	addMessageToHistory({ history, message: { role: "user", content: input } });
 
 	//Get the last n messages from the history
 	const contextMessages = getContextHistory({ history, size: sizeHistory });
 
-	let { price, topic, revised_prompt } = await getTopic({ topics, conversation: contextMessages, revised });
+	let { price, topic, revised_prompt } = await getTopic({ topics, conversation: contextMessages, revised, metadata });
 
 	//Base Data creation
-	const data: DataOrchestrator = {
+	const data: DataOrq = {
 		history,
 		input,
 		revised_prompt,
@@ -30,8 +32,6 @@ export const orchestrator = async ({ history = [], input, revised, sizeHistory =
 		userData
 	}
 
-	console.log(100000000);
-	
 	//Exist the actions for the topic
 	const action = actions[topic];
 	if (action) {

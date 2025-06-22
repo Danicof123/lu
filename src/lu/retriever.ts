@@ -1,3 +1,4 @@
+import { Chunks, Content, Messages, Model } from "../types/luOpenai";
 import { getAIResponse, getEmbeddings } from "./llm/openai";
 
 interface retrieverProps {
