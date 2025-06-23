@@ -320,3 +320,485 @@ export const consultaProductoAction = async ({ input, revised_prompt, userData, 
 - **Control granular**: Gestiona diferentes flujos según el contexto específico
 
 Con las acciones, Tomy puede manejar consultas complejas y proporcionar respuestas mucho más precisas y contextuales.
+
+## Generación de respuestas automáticas
+
+Además de clasificar tópicos para que tu frontend decida qué mostrar, **LU puede generar respuestas automáticamente** usando inteligencia artificial. Esto es ideal para manejar consultas complejas o casos especiales.
+
+### Configurando respuestas automáticas
+
+Vamos a crear una acción que genere respuestas automáticas cuando Tomy no pueda categorizar bien una consulta:
+
+```javascript
+import { orchestrator } from 'ludmi';
+
+const response = await orchestrator({
+  history,
+  input,
+  sizeHistory: 5,
+  topics,
+  userData,
+  actions: {
+    "Consulta_Producto": consultaProductoAction,
+    "Consulta_General": consultaGeneralAction  // Nueva acción con IA
+  },
+  metadata: {
+    currentYear: Date.now(),
+    mainTheme: "Soy Tomy, especialista en verduras y frutas frescas."
+  }
+});
+```
+
+### Implementando respuesta automática
+
+```javascript
+import { getAIResponse } from 'ludmi';
+
+export const consultaGeneralAction = async ({ input, revised_prompt, userData, history }) => {
+
+  const developerInstruction = `Eres Tomy, un verdulero experto que conoce todo sobre:
+- Verduras y frutas frescas de temporada
+- Precios actuales del mercado
+- Consejos de conservación y preparación
+- Recetas simples con ingredientes frescos
+- Diferencias entre productos orgánicos y convencionales
+
+Información del negocio:
+- Horarios: Lunes a Sábado de 8:00 a 20:00
+- Delivery disponible en zona norte
+- Productos orgánicos certificados disponibles
+- Especialidad en verduras de hoja y frutas de estación
+
+# Personalidad de Tomy
+- Amigable y cercano, como un verdulero de barrio
+- Conocimiento profundo pero explicado de manera simple
+- Siempre dispuesto a dar consejos prácticos
+- Usa un lenguaje coloquial pero profesional
+- Incluye recomendaciones personalizadas
+
+# Reglas
+- Si la consulta no está relacionada con verduras, frutas o el negocio, redirige amablemente
+- Siempre sugiere productos frescos y de temporada
+- Menciona beneficios nutricionales cuando sea relevante
+- Ofrece alternativas si algo no está disponible
+`;
+
+  const messages = [
+    {
+      role: "developer", 
+      content: developerInstruction
+    },
+    {
+      role: "user",
+      content: revised_prompt
+    }
+  ];
+
+  // Generar respuesta automática con IA
+  const { content, price } = await getAIResponse({
+    messages,
+    model: "gpt-4o-mini",
+    temperature: 0.7
+  });
+
+  return {
+    price: price,
+    eval: {
+      topic: "consulta_general",
+      content,
+      generated: true
+    }
+  };
+};
+```
+
+### Respuesta con contenido generado
+
+```json
+{
+  "price": {
+    "unit": "USD",
+    "value": 0.00025430
+  },
+  "data": {
+    "history": [
+      {
+        "role": "assistant", 
+        "content": "¡Hola! Soy Tomy, tu verdulero de confianza."
+      },
+      {
+        "role": "user",
+        "content": "¿Qué me recomendás para hacer una ensalada fresca?"
+      }
+    ],
+    "input": "¿Qué me recomendás para hacer una ensalada fresca?",
+    "revised_prompt": "¿Qué me recomendás para hacer una ensalada fresca y nutritiva?",
+    "topic": "Consulta_General",
+    "userData": {},
+    "eval": {
+      "topic": "consulta_general",
+      "content": "¡Excelente pregunta! Para una ensalada fresca te recomiendo:\n\n**Base verde**: Lechuga mantecosa o rúcula (están perfectas ahora)\n**Colores**: Tomate cherry, zanahoria rallada y pimiento rojo\n**Frescura**: Pepino y apio para el crunch\n**Toque especial**: Palta madura y unos brotes de alfalfa\n\n💡 **Tip del día**: La rúcula que tengo hoy está súper fresca, le va a dar un sabor increíble a tu ensalada. ¡Y la palta está en su punto justo!\n\n¿Querés que te arme un combo con todo esto?",
+      "generated": true
+    }
+  }
+}
+```
+
+### Función auxiliar: JSONparse
+
+LU incluye una utilidad especial para parsear respuestas JSON de LLMs:
+
+```javascript
+import { JSONparse } from 'ludmi';
+
+// Los LLMs a veces devuelven JSON envuelto en markdown
+const llmResponse = "```json\n{\"producto\": \"tomate\", \"precio\": 500}\n```";
+
+// JSON.parse fallaría, pero JSONparse lo maneja
+const parsed = JSONparse(llmResponse);
+console.log(parsed); // { producto: "tomate", precio: 500 }
+```
+
+### Ventajas de las respuestas automáticas
+
+- **Flexibilidad total**: Maneja consultas impredecibles con inteligencia artificial
+- **Personalización**: Define la personalidad y conocimientos específicos del bot
+- **Contextual**: Usa el historial y datos del usuario para respuestas relevantes
+- **Control de costos**: Monitorea el gasto por cada respuesta generada
+- **Fallback inteligente**: Ideal para casos que no encajan en tópicos predefinidos
+
+Con esta funcionalidad, Tomy puede responder de manera inteligente a prácticamente cualquier consulta relacionada con su dominio de conocimiento.
+
+## Creando bases de conocimiento
+
+LU te permite convertir tus datos estructurados en bases de conocimiento inteligentes que pueden ser consultadas semánticamente. Esto es ideal para que Tomy acceda a información específica sobre productos, precios y stock.
+
+### knowledgeBaseByJSON
+
+Convierte datos JSON en fragmentos embebidos listos para búsqueda semántica:
+
+```javascript
+const { knowledgeBaseByJSON } = require("ludmi");
+const productos = require("./db/productos.json");
+
+const embeddings = await knowledgeBaseByJSON({
+  json: productos,
+  id: "nombre",          // Campo que se usará como identificador
+  maxTokens: 800,        // Tokens máximos por fragmento
+  overlapTokens: 40      // Tokens de solapamiento entre fragmentos
+});
+```
+
+### Ejemplo de datos para Tomy
+
+Supongamos que tienes un archivo `productos.json` con información estática de tus productos:
+
+```json
+[
+  {
+    "nombre": "Tomate perita",
+    "categoria": "tomates",
+    "unidad": "kg",
+    "temporada": "todo el año",
+    "origen": "Mendoza",
+    "variedades": ["común", "orgánico"],
+    "usos": ["salsas", "conservas", "ensaladas"],
+    "descripcion": "Tomates peritas frescos, forma alargada, ideales para salsas y conservas por su pulpa carnosa"
+  },
+  {
+    "nombre": "Lechuga mantecosa",
+    "categoria": "verduras de hoja",
+    "unidad": "unidad",
+    "temporada": "otoño-invierno", 
+    "origen": "Buenos Aires",
+    "variedades": ["común", "orgánica"],
+    "usos": ["ensaladas", "hamburguesas", "wraps"],
+    "descripcion": "Lechuga de hojas tiernas y dulces, textura mantecosa, perfecta para ensaladas frescas"
+  },
+  {
+    "nombre": "Papa colorada",
+    "categoria": "tubérculos",
+    "unidad": "kg",
+    "temporada": "todo el año",
+    "origen": "Balcarce",
+    "variedades": ["común", "orgánica"],
+    "usos": ["puré", "hervida", "al horno", "papas fritas"],
+    "descripcion": "Papa de piel rojiza, pulpa amarilla, ideal para hervir y hacer puré"
+  }
+]
+```
+
+### Parámetros de configuración
+
+- **`id`**: Campo del JSON que se conservará como identificador único
+- **`maxTokens`**: Cantidad máxima de tokens por fragmento (recomendado: 800)
+- **`overlapTokens`**: Tokens que se superponen entre fragmentos cuando el contenido es muy largo
+
+### Resultado procesado
+
+```json
+[
+  {
+    "id": "Tomate perita",
+    "fragmentIndex": 0,
+    "text": "{\"nombre\":\"Tomate perita\", \"categoria\": \"tomates\", \"unidad\": \"kg\", \"temporada\": \"todo el año\", \"origen\": \"Mendoza\", \"variedades\": [\"común\", \"orgánico\"], \"usos\": [\"salsas\", \"conservas\", \"ensaladas\"]}",
+    "embedding": [0.003612947, -0.023726178, -0.011756117, ...]
+  },
+  {
+    "id": "Tomate perita",
+    "fragmentIndex": 1,
+    "text": "\"descripcion\": \"Tomates peritas frescos, forma alargada, ideales para salsas y conservas por su pulpa carnosa\"",
+    "embedding": [0.002456789, -0.018765432, -0.009123456, ...]
+  },
+  {
+    "id": "Lechuga mantecosa", 
+    "fragmentIndex": 0,
+    "text": "{\"nombre\":\"Lechuga mantecosa\", \"categoria\": \"verduras de hoja\", \"unidad\": \"unidad\", \"temporada\": \"otoño-invierno\", \"origen\": \"Buenos Aires\", \"variedades\": [\"común\", \"orgánica\"]}",
+    "embedding": [-0.002345678, -0.015678912, -0.009876543, ...]
+  }
+]
+```
+
+### Flujo completo: KB + Base de datos
+
+El enfoque recomendado es usar la base de conocimiento para **identificar productos** y luego consultar tu base de datos para **información dinámica**:
+
+```javascript
+// 1. Usuario pregunta: "¿Cuánto cuesta el tomate?"
+// 2. La KB identifica: "Tomate perita" 
+// 3. Consultas tu BD para precio/stock actual:
+
+const productoIdentificado = "Tomate perita";
+const infoDinamica = await consultarBD(productoIdentificado);
+// { precio: 1200, stock: 45, oferta: false }
+
+// 4. Combinas info estática + dinámica para responder
+```
+
+### Fragmentación inteligente
+
+Cuando un producto tiene mucha información (descripción larga, múltiples campos), LU automáticamente:
+
+1. **Divide el contenido** en fragmentos que no excedan `maxTokens`
+2. **Mantiene conexión** usando `overlapTokens` para preservar contexto
+3. **Asigna índices** (`fragmentIndex`) para identificar las partes
+4. **Conserva el ID** para relacionar todos los fragmentos del mismo elemento
+
+### Ventajas para Tomy
+
+- **Identificación inteligente**: Encuentra productos por sinónimos ("tomate cherry" → "Tomate perita")
+- **Información rica**: Accede a categorías, usos, temporadas y características
+- **Separación clara**: KB para identificar, BD para datos que cambian
+- **Búsqueda flexible**: "verdura para ensalada" puede encontrar múltiples opciones
+- **Escalabilidad**: Maneja catálogos grandes manteniendo datos dinámicos separados
+
+La base de conocimiento actúa como un "diccionario inteligente" que identifica productos, mientras que tu base de datos tradicional maneja precios y stock en tiempo real.
+
+### knowledgeBaseByText
+
+Convierte documentos de texto largo en fragmentos embebidos para búsqueda semántica. Ideal para manuales, guías o documentación que Tomy pueda consultar:
+
+```javascript
+const { knowledgeBaseByText } = require("ludmi");
+const fs = require('fs');
+
+// Leer un documento de texto
+const guiaVerduras = fs.readFileSync('./docs/guia-verduras.txt', 'utf8');
+
+const embeddings = await knowledgeBaseByText({
+  text: guiaVerduras,
+  maxTokens: 800,        // Tokens máximos por fragmento
+  overlapTokens: 40      // Tokens de solapamiento entre fragmentos
+});
+```
+
+### Ejemplo de documento para Tomy
+
+Supongamos que tienes una guía con información especializada:
+
+```text
+# Guía del Verdulero Experto
+
+## Temporadas de Verduras
+
+Las verduras de temporada no solo son más sabrosas, sino también más económicas y nutritivas. Durante el otoño, las verduras de hoja como lechuga, espinaca y acelga están en su mejor momento. 
+
+La lechuga mantecosa alcanza su máxima dulzura entre marzo y junio, cuando las temperaturas frescas favorecen el desarrollo de hojas tiernas. Es importante conservarla en el cajón de verduras de la heladera, envuelta en papel absorbente.
+
+## Conservación y Almacenamiento
+
+Los tomates nunca deben refrigerarse si no están completamente maduros, ya que el frío interrumpe el proceso de maduración y afecta su sabor. Los tomates peritas son ideales para conservas debido a su menor contenido de agua y mayor concentración de pulpa.
+
+## Consejos Nutricionales
+
+Las verduras de color verde oscuro como la espinaca y el brócoli son ricas en hierro y ácido fólico. Se recomienda consumirlas junto con alimentos ricos en vitamina C para mejorar la absorción del hierro.
+```
+
+### Resultado procesado
+
+```json
+[
+  {
+    "fragmentIndex": 0,
+    "text": "# Guía del Verdulero Experto\n\n## Temporadas de Verduras\n\nLas verduras de temporada no solo son más sabrosas, sino también más económicas y nutritivas. Durante el otoño, las verduras de hoja como lechuga, espinaca y acelga están en su mejor momento.",
+    "embedding": [-0.027951738, -0.027387531, 0.010966767, ...]
+  },
+  {
+    "fragmentIndex": 1,
+    "text": "están en su mejor momento.\n\nLa lechuga mantecosa alcanza su máxima dulzura entre marzo y junio, cuando las temperaturas frescas favorecen el desarrollo de hojas tiernas. Es importante conservarla en el cajón de verduras",
+    "embedding": [-0.025413267, -0.023891045, 0.008745632, ...]
+  },
+  {
+    "fragmentIndex": 2,
+    "text": "conservarla en el cajón de verduras de la heladera, envuelta en papel absorbente.\n\n## Conservación y Almacenamiento\n\nLos tomates nunca deben refrigerarse si no están completamente maduros",
+    "embedding": [-0.022876543, -0.021456789, 0.009876543, ...]
+  }
+]
+```
+
+### Diferencias con knowledgeBaseByJSON
+
+- **Sin parámetro `id`**: No hay identificadores únicos, solo índices secuenciales
+- **Fragmentación automática**: Divide el texto largo según `maxTokens`
+- **Solapamiento crucial**: `overlapTokens` mantiene continuidad entre fragmentos
+- **Contenido continuo**: Ideal para documentos narrativos o explicativos
+
+### Casos de uso para Tomy
+
+- **Guías de temporada**: Información sobre cuándo están mejor las verduras
+- **Consejos de conservación**: Cómo mantener productos frescos
+- **Recetas y preparación**: Sugerencias culinarias
+- **Información nutricional**: Beneficios de cada producto
+- **Historia y origen**: Datos curiosos sobre productos
+
+### Ventajas del texto embebido
+
+- **Búsqueda contextual**: Encuentra información relevante por contexto
+- **Conocimiento profundo**: Accede a información especializada
+- **Respuestas fundamentadas**: Basa respuestas en documentación real
+- **Actualización fácil**: Modifica el documento y regenera embeddings
+- **Flexibilidad**: Funciona con cualquier tipo de texto estructurado
+
+Con ambas funciones (`knowledgeBaseByJSON` y `knowledgeBaseByText`), Tomy puede combinar datos estructurados de productos con conocimiento experto en formato de texto.
+
+## Recuperación inteligente de información
+
+Una vez que tienes tus bases de conocimiento embebidas, puedes usar **retriever** y **RAG** para que Tomy encuentre información específica y genere respuestas fundamentadas.
+
+### Usando el retriever
+
+El retriever busca los fragmentos más relevantes según la consulta del usuario:
+
+```javascript
+import { retriever } from 'ludmi';
+
+const chunks = await retriever({
+  revised_prompt,           // Entrada procesada por el orquestador
+  data: baseConocimiento,   // Tu base de conocimiento embebida
+  size: 3                   // Cantidad de fragmentos a recuperar
+});
+```
+
+### Ejemplo con la guía de Tomy
+
+```javascript
+// El usuario pregunta: "¿Cómo conservar las lechugas?"
+const chunks = await retriever({
+  revised_prompt: "¿Cómo conservar las lechugas frescas por más tiempo?",
+  data: guiaEmbebida,       // Base de conocimiento de la guía del verdulero
+  size: 2                   // Los 2 fragmentos más relevantes
+});
+
+// Resultado: fragmentos sobre conservación de verduras de hoja
+```
+
+### Generando respuestas con RAG
+
+RAG (Retrieval-Augmented Generation) combina los fragmentos recuperados con IA para generar respuestas contextuales:
+
+```javascript
+import { rag } from 'ludmi';
+
+// Crear prompt personalizado para Tomy
+const prompt = `Responder usando solo la información de la base de conocimiento: \`${JSON.stringify(chunks)}\`
+
+# Reglas
+- Solo ayudar con consultas sobre verduras, frutas y alimentación saludable
+- Si no hay información relevante, sugerir consultar en el local
+
+# Personalidad de Tomy
+- Amigable y cercano, como un verdulero de barrio con experiencia
+- Conocimiento práctico y consejos útiles
+- Lenguaje sencillo pero informativo
+- Siempre incluye tips extra cuando sea relevante
+- Ocasionalmente menciona productos de temporada
+`;
+
+// Generar respuesta fundamentada
+const respuesta = await rag({
+  chunks,
+  prompt,
+  revised_prompt
+});
+
+console.log(respuesta);
+// { content: "Para conservar lechugas frescas...", price: 0.00012 }
+```
+
+### Parámetros de RAG
+
+La función `rag` acepta múltiples configuraciones:
+
+```javascript
+const respuesta = await rag({
+  chunks,                    // Fragmentos recuperados
+  revised_prompt,           // Entrada del usuario procesada
+  prompt,                   // Prompt personalizado (opcional)
+  conversation,             // Historial completo (alternativa a revised_prompt)
+  userData,                 // Datos del usuario para personalización
+  model: "gpt-4o-mini"     // Modelo a usar (por defecto gpt-4o-mini)
+});
+```
+
+### Flujo completo: De consulta a respuesta
+
+```javascript
+// 1. Usuario pregunta sobre conservación
+const userInput = "¿Cómo mantengo frescas las verduras de hoja?";
+
+// 2. Orquestador procesa y enriquece
+const { data } = await orchestrator({
+  input: userInput,
+  // ... otros parámetros
+});
+
+// 3. Retriever encuentra información relevante
+const chunks = await retriever({
+  revised_prompt: data.revised_prompt,
+  data: guiaVerduleroEmbebida,
+  size: 3
+});
+
+// 4. RAG genera respuesta fundamentada
+const respuesta = await rag({
+  chunks,
+  prompt: promptTomy,
+  revised_prompt: data.revised_prompt
+});
+
+// 5. Respuesta final para el usuario
+console.log(respuesta.content);
+// "Para mantener frescas las verduras de hoja como lechuga y espinaca, 
+//  te recomiendo guardarlas en el cajón de verduras envueltas en papel 
+//  absorbente. Esto mantiene la humedad justa sin que se pudran..."
+```
+
+### Ventajas del sistema RAG
+
+- **Respuestas fundamentadas**: Basadas en información real de tu base de conocimiento
+- **Actualizable**: Cambia la documentación y las respuestas se actualizan
+- **Precisión**: Solo usa información que realmente tienes
+- **Personalizable**: Adapta la personalidad y estilo de respuesta
+- **Eficiente**: Encuentra información relevante sin procesar todo el conocimiento
+
+Con retriever + RAG, Tomy puede actuar como un verdadero experto que consulta su conocimiento especializado para dar respuestas precisas y útiles.

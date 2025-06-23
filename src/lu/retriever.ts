@@ -11,10 +11,11 @@ interface retrieverProps {
 }
 
 interface ragProps {
-	userData: UserData;
-	conversation: Messages;
+	userData?: UserData;
+	conversation?: Messages;
+	revised_prompt?: string;
 	chunks: Chunks;
-	model: Model;
+	model?: Model;
 	prompt?: string;
 }
 
@@ -40,26 +41,35 @@ export const retriever = async ({ revised_prompt, data, size = 4 }: retrieverPro
 	return chunks.slice(0, size);
 }
 
-export const rag = async ({ chunks, conversation, userData, model, prompt }: ragProps) => {
+export const rag = async ({ chunks, conversation, revised_prompt, userData={}, model="gpt-4o-mini", prompt }: ragProps) => {
+	//conversation o revised_promp, uno debe venir
+	if (!conversation?.length && !revised_prompt) throw new Error("Debe enviar revised_prompt o conversation");
+
 	const developerInstruction = prompt || `Responder solo usando la información extraída de la BD:
 \`${JSON.stringify(chunks)}\`
 
 REGLAS DE RESPUESTA:
 - Mismo idioma del usuario.
 - Estilo whatsapp, ejemplo para destacar palabra clave: *palabra* (No usar doble asteriscos; **MAL**).
-- Emojis con coherencia.`;
+- Emojis con coherencia.
+
+Datos que conocemos del usuario: \`${JSON.stringify(userData)}\`
+`;
 
 	const messages: Messages = [
 		{
 			role: "developer",
 			content: developerInstruction
-		},
-		{
-			role: "system",
-			content: `Datos que conocemos del usuario: \`${JSON.stringify(userData)}\``
-		},
-		...conversation
+		}
 	]
+
+	if (revised_prompt)
+		messages.push({
+			role: "user",
+			content: revised_prompt
+		});
+	else if (conversation)
+		messages.push(...conversation);
 
 	const AIresponse = await getAIResponse({ messages, model, temperature: 1 })
 	return AIresponse;
