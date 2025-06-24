@@ -802,3 +802,170 @@ console.log(respuesta.content);
 - **Eficiente**: Encuentra información relevante sin procesar todo el conocimiento
 
 Con retriever + RAG, Tomy puede actuar como un verdadero experto que consulta su conocimiento especializado para dar respuestas precisas y útiles.
+
+## Gestión de variables del usuario
+
+LU permite almacenar y usar información específica de cada usuario a través de `userData`. Esto es ideal para mantener estado entre conversaciones, como carritos de compra, preferencias o historial.
+
+### Usando userData en acciones
+
+Las acciones pueden tanto **leer** como **modificar** las variables del usuario:
+
+```javascript
+export const carritoAction = async ({ input, revised_prompt, userData, history }) => {
+
+  const developerInstruction = `El usuario quiere revisar su carrito de compras.
+  
+  Carrito actual: ${JSON.stringify(userData.carrito || [])}
+  Total productos: ${(userData.carrito || []).length}
+  Total estimado: ${userData.totalCarrito || 0}
+  
+  Muestra el carrito de manera amigable y pregunta si quiere agregar algo más o finalizar la compra.
+  
+  # Personalidad de Tomy
+  - Amigable y servicial como un verdulero de barrio
+  - Siempre sugiere productos complementarios de temporada
+  - Menciona ofertas o recomendaciones cuando sea apropiado
+  - Usa un lenguaje cercano y familiar
+  `;
+
+  const messages = [
+    {
+      role: "developer",
+      content: developerInstruction
+    },
+    {
+      role: "user", 
+      content: revised_prompt
+    }
+  ];
+
+  const { content, price } = await getAIResponse({
+    messages,
+    model: "gpt-4o-mini",
+    temperature: 0.7
+  });
+
+  return {
+    price: price,
+    eval: {
+      action: "carritoAction",
+      generative: true,
+      content
+    }
+  };
+};
+```
+
+### Ejemplo de userData para Tomy
+
+```javascript
+const userData = {
+  carrito: [
+    { producto: "Tomate perita", cantidad: 2, unidad: "kg" },
+    { producto: "Lechuga mantecosa", cantidad: 1, unidad: "unidad" }
+  ],
+  totalCarrito: 2400,
+  preferencias: ["orgánico", "local"],
+  historialCompras: ["papa", "cebolla", "zanahoria"],
+  ubicacion: "Belgrano",
+  clienteFreuente: true
+};
+```
+
+### Actualizando userData
+
+También puedes modificar las variables desde las acciones:
+
+```javascript
+export const agregarProductoAction = async ({ input, revised_prompt, userData, history }) => {
+  
+  // Leer carrito actual
+  const carritoActual = userData.carrito || [];
+  
+  // Agregar nuevo producto (lógica simplificada)
+  const nuevoProducto = { 
+    producto: "Espinaca", 
+    cantidad: 1, 
+    unidad: "atado" 
+  };
+  
+  const carritoActualizado = [...carritoActual, nuevoProducto];
+  
+  // Generar respuesta
+  const { content, price } = await getAIResponse({
+    messages: [
+      {
+        role: "developer",
+        content: `Producto agregado: ${nuevoProducto.producto}. 
+                 Carrito ahora tiene ${carritoActualizado.length} productos.
+                 Confirma la adición y pregunta si necesita algo más.`
+      },
+      {
+        role: "user",
+        content: revised_prompt
+      }
+    ]
+  });
+
+  return {
+    price: price,
+    eval: {
+      action: "agregarProducto",
+      content,
+      // Actualizar userData
+      updatedUserData: {
+        ...userData,
+        carrito: carritoActualizado,
+        totalCarrito: userData.totalCarrito + 800 // precio de espinaca
+      }
+    }
+  };
+};
+```
+
+### Respuesta con userData actualizado
+
+```json
+{
+  "price": {
+    "unit": "USD",
+    "value": 0.00015430
+  },
+  "data": {
+    "topic": "Carrito",
+    "userData": {
+      "carrito": [
+        { "producto": "Tomate perita", "cantidad": 2, "unidad": "kg" },
+        { "producto": "Lechuga mantecosa", "cantidad": 1, "unidad": "unidad" },
+        { "producto": "Espinaca", "cantidad": 1, "unidad": "atado" }
+      ],
+      "totalCarrito": 3200,
+      "clienteFrecuente": true
+    },
+    "eval": {
+      "action": "agregarProducto",
+      "content": "¡Perfecto! Agregué un atado de espinaca fresca a tu carrito. Ya tenés 3 productos por un total de $3.200. ¿Te interesa algo más? Tengo unas zanahorias buenísimas que van perfecto con lo que llevás 🥕"
+    }
+  }
+}
+```
+
+### Casos de uso con userData
+
+- **Carrito de compras**: Mantener productos seleccionados entre conversaciones
+- **Preferencias**: Recordar si prefiere productos orgánicos o locales
+- **Historial**: Sugerir productos basándose en compras anteriores  
+- **Ubicación**: Personalizar ofertas según la zona de delivery
+- **Métricas**: Tiempo de conversación, costos acumulados
+- **Estado de pedido**: Seguimiento de órdenes en proceso
+
+### Ventajas de userData
+
+- **Persistencia**: Mantiene información entre mensajes y sesiones
+- **Personalización**: Adapta respuestas según datos específicos del usuario
+- **Estado dinámico**: Actualiza información en tiempo real
+- **Contexto rico**: Enriquece las respuestas con información personal
+- **Flexibilidad**: Estructura de datos completamente customizable
+
+Con `userData`, Tomy puede ofrecer una experiencia personalizada recordando preferencias, manteniendo carritos de compra y adaptando sus recomendaciones a cada cliente específico.
