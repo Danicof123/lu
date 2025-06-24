@@ -19,9 +19,9 @@ export const orchestrator = async ({ history = [], input, revised, sizeHistory =
 	addMessageToHistory({ history, message: { role: "user", content: input } });
 
 	//Get the last n messages from the history
-	const contextMessages = getContextHistory({ history, size: sizeHistory });
+	history = getContextHistory({ history, size: sizeHistory });
 
-	let { price, topic, revised_prompt } = await getTopic({ topics, conversation: contextMessages, revised, metadata });
+	let { price, topic, revised_prompt } = await getTopic({ topics, conversation: history, revised, metadata });
 
 	//Base Data creation
 	const data: DataOrq = {
