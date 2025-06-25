@@ -1,8 +1,8 @@
-import { Chunks, Content, Messages, Model } from "../types/luOpenai";
+import { Chunks, Messages } from "../types/luTypes";
 import { getAIResponse, getEmbeddings } from "./llm/openai";
 
 interface retrieverProps {
-	revised_prompt: Content;
+	revised_prompt: string;
 	data: Array<{
 		embedding: Array<number>;
 		[key: string]: any;
@@ -11,11 +11,11 @@ interface retrieverProps {
 }
 
 interface ragProps {
-	userData?: UserData;
+	userData?: any;
 	conversation?: Messages;
 	revised_prompt?: string;
 	chunks: Chunks;
-	model?: Model;
+	model?: string;
 	prompt?: string;
 }
 

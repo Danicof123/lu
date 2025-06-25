@@ -30,3 +30,29 @@ export type ActionProps = {
 	userData: any;
 	history?: Messages
 }
+
+export interface ActionReturn {
+	price: number;
+	eval: any
+}
+
+export type Action = ({input, revised_prompt, userData, history}: ActionProps) => Promise<ActionReturn>;
+export type Actions = {
+	[key: string]: Action;
+}
+
+//Classifier
+
+export type ClassifiedTopic = {
+	topic: string;
+	revised_prompt: string;
+}
+
+// Retriever
+export type Chunk = {
+	embedding: Array<number>;
+	score: number;
+	[key: string]: any;
+}
+
+export type Chunks = Chunk[];

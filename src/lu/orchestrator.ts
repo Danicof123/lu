@@ -1,17 +1,16 @@
-import { Content, Messages } from "../types/luOpenai";
-import { DataOrq, ResultOrq } from "../types/luTypes";
+import { Actions, DataOrq, Messages, ResultOrq } from "../types/luTypes";
 import { getTopic } from "./classifier";
 import { addMessageToHistory, getContextHistory } from "./memory/queueMemory";
 
 interface OrchestratorProps {
 	metadata?: any,
 	topics: any;
-	input: Content;
+	input: string;
 	revised?: string;
 	history: Messages;
 	sizeHistory: number;
 	actions?: Actions;
-	userData: UserData;
+	userData: any;
 }
 
 export const orchestrator = async ({ history = [], input, revised, sizeHistory = 10, topics, userData = {}, actions = {}, metadata }: OrchestratorProps): Promise<ResultOrq> => {

@@ -1,4 +1,4 @@
-import { Message, Messages } from "../../types/luOpenai";
+import { Message, Messages } from "../../types/luTypes";
 
 interface MessageToHistoryProps {
 	history: Messages;

@@ -1,4 +1,4 @@
-import { Messages, Model } from "../types/luOpenai";
+import { Messages } from "../types/luTypes";
 import { getAIResponse } from "./llm/openai";
 import { JSONparse } from "./parse";
 
@@ -12,7 +12,7 @@ interface getTopicProps {
 		topic?: string;
 	},
 	temperature?: number;
-	model?: Model;
+	model?: string;
 }
 
 interface getRevisedPromptProps {
@@ -20,7 +20,7 @@ interface getRevisedPromptProps {
 	conversation: Messages;
 	prompt?: string;
 	temperature?: number;
-	model?: Model;
+	model?: string;
 }
 
 export interface classifierProps {

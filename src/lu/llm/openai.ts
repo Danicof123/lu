@@ -1,5 +1,5 @@
 import { openai } from "../../services/openai";
-import { Messages, Model } from "../../types/luOpenai";
+import { Messages } from "../../types/luTypes";
 
 interface ToolFunction {
   type: "function";
@@ -21,7 +21,7 @@ interface ToolFunction {
 
 interface AIResponseProps {
 	messages: Messages;
-	model: Model;
+	model: string;
 	temperature: number;
 	tools?: ToolFunction[];
 }
