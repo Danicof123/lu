@@ -31,7 +31,7 @@ export interface classifierProps {
 	temperature?: number;
 }
 
-export const getTopic = async ({ topics, conversation, revised, prompts, model = "gpt-4o-mini", temperature = .5, metadata = {} }: getTopicProps) => {
+export const getTopic = async ({ topics, conversation, revised, prompts, model = "gpt-4o-mini", temperature = 1, metadata = {} }: getTopicProps) => {
 
 	//get revised prompt
 	const revisedPrompt = (revised) ? { content: revised, price: 0 } : await getRevisedPrompt({ prompt: prompts?.revised, conversation, model, temperature, metadata });
