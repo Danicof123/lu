@@ -11,8 +11,8 @@ export type DataOrq = {
 	input: string;
 	revised_prompt: string;
 	history: Messages;
-	userData: UserData;
-	eval?: Eval;
+	userData: any;
+	eval?: any;
 }
 
 export type ResultOrq = {
@@ -27,6 +27,6 @@ export type ResultOrq = {
 export type ActionProps = {
 	input: string;
 	revised_prompt: string;
-	userData: UserData;
+	userData: any;
 	history?: Messages
 }
