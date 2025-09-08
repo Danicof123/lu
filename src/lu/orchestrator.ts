@@ -5,6 +5,7 @@ import { addMessageToHistory, getContextHistory } from "./memory/queueMemory";
 interface OrchestratorProps {
 	metadata?: any,
 	topics: any;
+	subtopic?: boolean;
 	input: string;
 	temperature?: number;
 	revised?: string;
@@ -15,14 +16,14 @@ interface OrchestratorProps {
 
 }
 
-export const orchestrator = async ({ history = [], input, revised, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, temperature=1	 }: OrchestratorProps): Promise<ResultOrq> => {
+export const orchestrator = async ({ history = [], input, subtopic=false, revised, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, temperature=1	 }: OrchestratorProps): Promise<ResultOrq> => {
 	//Update the history with the new input
 	addMessageToHistory({ history, message: { role: "user", content: input } });
 
 	//Get the last n messages from the history
 	history = getContextHistory({ history, size: sizeHistory });
 
-	let { price, topic, revised_prompt } = await getTopic({ topics, conversation: history, revised, metadata, temperature });
+	let { price, topic, revised_prompt } = await getTopic({ topics, subtopic, conversation: history, revised, metadata, temperature });
 
 	//Base Data creation
 	const data: DataOrq = {
