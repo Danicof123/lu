@@ -8,6 +8,7 @@ export type Messages = Message[];
 
 export type DataOrq = {
 	topic: string;
+	stopic?: string;
 	input: string;
 	revised_prompt: string;
 	history: Messages;

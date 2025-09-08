@@ -50,7 +50,8 @@ export const getTopic = async ({ topics, subtopic = false, conversation, revised
 	return {
 		price: respTopic.price + revisedPrompt.price,
 		revised_prompt: revisedPrompt.content,
-		topic: respTopic.topic
+		topic: respTopic.topic,
+		stopic: respTopic.stopic
 	}
 }
 
@@ -80,9 +81,11 @@ Formato respuesta:
 	const respTopic = await getAIResponse({ messages, model, temperature });
 
 	let topic = "ne";
+	let stopic = "ne";
 	try {
-		const parse = JSONparse(respTopic.content) as { topic?: string, name?: string };
+		const parse = JSONparse(respTopic.content) as { topic?: string, name?: string, subtopic?: string };
 		topic = parse?.topic || parse?.name || "ne";
+		stopic = parse?.subtopic || "ne"
 		console.log("Topic clasificado:", topic);
 
 	} catch (error) {
@@ -92,7 +95,8 @@ Formato respuesta:
 
 	return {
 		price: respTopic.price,
-		topic
+		topic,
+		stopic
 	}
 }
 
