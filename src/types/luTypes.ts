@@ -6,6 +6,14 @@ export type Message = {
 }
 export type Messages = Message[];
 
+export type LlmOrq = {
+	temperature?: number;
+	revised?: string;
+	classifierPrompt?: string;
+	revisedPrompt?: string;
+	model?: string;
+}
+
 export type DataOrq = {
 	topic: string;
 	stopic?: string;
@@ -17,10 +25,6 @@ export type DataOrq = {
 }
 
 export type ResultOrq = {
-	price: {
-		unit: "USD";
-		value: number;
-	};
 	data: DataOrq;
 }
 
@@ -33,11 +37,10 @@ export type ActionProps = {
 }
 
 export interface ActionReturn {
-	price: number;
 	eval: any
 }
 
-export type Action = ({input, revised_prompt, userData, history}: ActionProps) => Promise<ActionReturn>;
+export type Action = ({ input, revised_prompt, userData, history }: ActionProps) => Promise<ActionReturn>;
 export type Actions = {
 	[key: string]: Action;
 }

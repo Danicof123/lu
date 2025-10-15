@@ -1,4 +1,4 @@
-import { Actions, DataOrq, Messages, ResultOrq } from "../types/luTypes";
+import { Actions, DataOrq, LlmOrq, Messages, ResultOrq } from "../types/luTypes";
 import { getTopic } from "./classifier";
 import { addMessageToHistory, getContextHistory } from "./memory/queueMemory";
 
@@ -7,8 +7,7 @@ interface OrchestratorProps {
 	topics: any;
 	subtopic?: boolean;
 	input: string;
-	temperature?: number;
-	revised?: string;
+	llm?: LlmOrq;
 	history?: Messages;
 	sizeHistory?: number;
 	actions?: Actions;
@@ -16,14 +15,19 @@ interface OrchestratorProps {
 
 }
 
-export const orchestrator = async ({ history = [], input, subtopic=false, revised, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, temperature=1	 }: OrchestratorProps): Promise<ResultOrq> => {
+const defaultLlm: LlmOrq = {
+	temperature: .5,
+	model: "gpt-4o-mini"
+}
+
+export const orchestrator = async ({ history = [], input, subtopic = false, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, llm = defaultLlm }: OrchestratorProps): Promise<ResultOrq> => {
 	//Update the history with the new input
 	addMessageToHistory({ history, message: { role: "user", content: input } });
 
 	//Get the last n messages from the history
 	history = getContextHistory({ history, size: sizeHistory });
 
-	let { price, topic, stopic, revised_prompt } = await getTopic({ topics, subtopic, conversation: history, revised, metadata, temperature });
+	let { topic, stopic, revised_prompt } = await getTopic({ topics, subtopic, conversation: history, llm, metadata });
 
 	//Base Data creation
 	const data: DataOrq = {
@@ -35,20 +39,18 @@ export const orchestrator = async ({ history = [], input, subtopic=false, revise
 		userData
 	}
 
-	//Exist the actions for the topic
-	const action = actions[topic];
+	//Asegurar que topic siempre esté completo
+	topic = topic || "ne";
+
+	// If an action exists for the topic
+	const action = actions?.[topic];
 	if (action) {
 		const resultAction = await action({ input, revised_prompt, userData, history });
-		price += resultAction.price;
-		data.eval = resultAction.eval;
+		return { data: { ...data, eval: resultAction.eval } };
 	}
 
 	//Orchestrator END
 	return {
-		price: {
-			unit: "USD",
-			value: price
-		},
 		data
 	}
 }
