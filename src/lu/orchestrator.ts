@@ -20,7 +20,9 @@ const defaultLlm: LlmOrq = {
 	model: "gpt-4o-mini"
 }
 
-export const orchestrator = async ({ history = [], input, subtopic = false, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, llm = defaultLlm }: OrchestratorProps): Promise<ResultOrq> => {
+export const orchestrator = async ({ history = [], input, subtopic = false, sizeHistory = 10, topics, userData = {}, actions = {}, metadata, llm }: OrchestratorProps): Promise<ResultOrq> => {
+	llm = { ...defaultLlm, ...(llm || {}) };
+
 	//Update the history with the new input
 	addMessageToHistory({ history, message: { role: "user", content: input } });
 

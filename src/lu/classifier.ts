@@ -51,6 +51,11 @@ export const getTopic = async ({ topics, subtopic = false, conversation, llm = d
 //Solo clasifica el topic de la entrada del usuario
 export const classifier = async ({ topics, subtopic = false, input, llm }: classifierProps) => {
 
+	const output = {
+		"topic": "nombre",
+		...(subtopic ? { "subtopic": "auto" } : {})
+	}
+
 	const developerInstruction = llm.classifierPrompt || `Clasifica la entrada del usuario con las siguientes categorías de topics:
 \`${JSON.stringify(topics)}\`
 
@@ -61,10 +66,9 @@ Pasos:
 ${subtopic && "Seleccionar el mejor subtopic dentro del topic clasificado"}
 
 Formato respuesta:
-{
-	"topic": "nombre del topic"
-	${subtopic && `"subtopic": "nombre del subtopic"`}
-}`;
+${JSON.stringify(output)}
+`;
+
 	const messages: Messages = [
 		{ role: "developer", content: developerInstruction },
 		{ role: "user", content: input },
@@ -73,20 +77,26 @@ Formato respuesta:
 	const respTopic = await getAIResponse({ messages, model: llm.model, temperature: llm.temperature });
 
 	let topic = "ne";
-	let stopic = "ne";
+	let stopic;
+	let dev = "";
+
 	try {
-		const parse = JSONparse(respTopic.content) as { topic?: string, name?: string, subtopic?: string };
+		const parse = JSONparse(respTopic.content) as { topic?: string, name?: string, subtopic?: string, dev?: string };
 		topic = parse?.topic || parse?.name || "ne";
-		stopic = parse?.subtopic || "ne"
+		stopic = parse?.subtopic
+		dev = parse?.dev || ""
+
+		if(dev)
+			console.log(dev);
 
 	} catch (error) {
 		console.error(error);
-		topic = respTopic.content;
 	}
 
 	return {
 		topic,
-		stopic
+		stopic,
+		dev
 	}
 }
 
